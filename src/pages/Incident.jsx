@@ -10,7 +10,54 @@ import {
 import Card from "../components/Card";
 import StatusBadge from "../components/StatusBadge";
 
+import { detectAccident } from "../logic/crashDetection";
+import { assessSeverity } from "../logic/severityEngine";
+
+import incidents from "../data/incidents.json";
+
+import { useState } from "react";
+
 function Incident() {
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSimulateAccident = async () => {
+    if (loading) return;
+
+    setLoading(true);
+    setError("");
+    setResult(null);
+
+    try {
+      // Simulated sensor data
+      const simulatedSignals = {
+        ...incidents[0],
+        suddenStop: true
+      };
+
+      // Crash detection
+      const detection = detectAccident(simulatedSignals);
+
+      // Severity assessment
+      const severity = assessSeverity(simulatedSignals);
+
+      setResult({
+        detected: detection.detected,
+        confidence: detection.confidence,
+        signalsConfirmed: detection.signalsConfirmed,
+        severity: severity.severity
+      });
+    } catch (err) {
+  console.error("ACCIDENT SIMULATION ERROR:", err);
+  setError(err.message || "Unable to simulate accident. Please try again.");
+} finally {
+      setLoading(false);
+    }
+  };
+
+  const currentSeverity = result?.severity || "CRITICAL";
+
   return (
     <div className="dashboard-page">
 
@@ -19,7 +66,6 @@ function Incident() {
       <div className="dashboard-header">
 
         <div>
-
           <p className="dashboard-label">
             INCIDENT ANALYSIS
           </p>
@@ -32,15 +78,34 @@ function Incident() {
             Review the received incident signals and
             severity assessment.
           </p>
-
         </div>
 
         <StatusBadge
-          status="Critical"
+          status={currentSeverity}
           type="danger"
         />
 
       </div>
+
+
+      {/* Simulate Accident */}
+
+      <Card title="Crash Detection Simulation">
+
+        <button
+          onClick={handleSimulateAccident}
+          disabled={loading}
+        >
+          {loading ? "Detecting Accident..." : "Simulate Accident"}
+        </button>
+
+        {error && (
+          <p role="alert">
+            {error}
+          </p>
+        )}
+
+      </Card>
 
 
       {/* Signal Source */}
@@ -79,6 +144,8 @@ function Incident() {
 
       <div className="dashboard-grid">
 
+        {/* Signal Validation */}
+
         <Card title="Signal Validation">
 
           <div className="info-row">
@@ -88,12 +155,15 @@ function Incident() {
             <div>
 
               <strong>
-                Incident Signal Received
+                {result?.detected
+                  ? "Incident Signal Received"
+                  : "Waiting for Simulation"}
               </strong>
 
               <p>
-                Multiple signals have been received
-                and validated by LIFELINK.
+                {result?.detected
+                  ? "Multiple signals have been received and validated by LIFELINK."
+                  : "Press Simulate Accident to validate the sensor signals."}
               </p>
 
             </div>
@@ -101,8 +171,8 @@ function Incident() {
           </div>
 
           <StatusBadge
-            status="Validated"
-            type="success"
+            status={result?.detected ? "Validated" : "Waiting"}
+            type={result?.detected ? "success" : "info"}
           />
 
         </Card>
@@ -114,60 +184,28 @@ function Incident() {
 
           <div className="signal-list">
 
-            <div className="signal-item">
+            {[
+              "Impact Force",
+              "Sudden Deceleration",
+              "Sudden Stop",
+              "Orientation Change",
+              "Airbag Trigger"
+            ].map((signal) => (
 
-              <span>
-                Impact Force
-              </span>
+              <div className="signal-item" key={signal}>
 
-              <StatusBadge
-                status="Detected"
-                type="danger"
-              />
+                <span>
+                  {signal}
+                </span>
 
-            </div>
+                <StatusBadge
+                  status={result ? "Detected" : "Waiting"}
+                  type={result ? "danger" : "info"}
+                />
 
+              </div>
 
-            <div className="signal-item">
-
-              <span>
-                Sudden Deceleration
-              </span>
-
-              <StatusBadge
-                status="Detected"
-                type="danger"
-              />
-
-            </div>
-
-
-            <div className="signal-item">
-
-              <span>
-                Orientation Change
-              </span>
-
-              <StatusBadge
-                status="Detected"
-                type="danger"
-              />
-
-            </div>
-
-
-            <div className="signal-item">
-
-              <span>
-                Airbag Trigger
-              </span>
-
-              <StatusBadge
-                status="Detected"
-                type="danger"
-              />
-
-            </div>
+            ))}
 
           </div>
 
@@ -185,11 +223,11 @@ function Incident() {
             <div>
 
               <strong>
-                CRITICAL
+                {result?.severity || "WAITING"}
               </strong>
 
               <p>
-                Confidence: 94%
+                Confidence: {result?.confidence ?? "--"}%
               </p>
 
             </div>
@@ -197,9 +235,11 @@ function Incident() {
           </div>
 
           <p className="assessment-text">
-            Multiple high-impact signals indicate
-            that immediate emergency assistance
-            may be required.
+
+            {result
+              ? "Multiple high-impact signals indicate that immediate emergency assistance may be required."
+              : "Severity will be calculated after accident simulation."}
+
           </p>
 
         </Card>
@@ -265,7 +305,9 @@ function Incident() {
               </span>
 
               <strong>
-                4 / 4
+                {result
+                  ? `${result.signalsConfirmed} / 5`
+                  : "-- / 5"}
               </strong>
 
             </div>
@@ -291,8 +333,11 @@ function Incident() {
               </span>
 
               <strong>
+
                 <ShieldCheck size={16} />
-                Confirmed
+
+                {result ? "Confirmed" : "Waiting"}
+
               </strong>
 
             </div>
