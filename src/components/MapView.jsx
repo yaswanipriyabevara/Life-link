@@ -6,7 +6,16 @@ import {
   Popup
 } from "react-leaflet";
 
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+
+const hospitalIcon = L.divIcon({
+  className: "hospital-marker",
+  html: "🏥",
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -16]
+});
 
 function MapView({
   latitude,
@@ -60,6 +69,7 @@ function MapView({
                 hospital.latitude,
                 hospital.longitude
               ]}
+              icon={hospitalIcon}
             >
               <Popup>
                 <strong>
@@ -69,15 +79,22 @@ function MapView({
                 </strong>
 
                 <br />
+
                 {hospital.name}
 
                 <br />
-                Distance: {hospital.distance} km
+
+                Distance:{" "}
+                {hospital.distance !== undefined
+                  ? `${hospital.distance} km`
+                  : "Calculating..."}
 
                 <br />
+
                 Trauma Level: {hospital.traumaLevel}
 
                 <br />
+
                 Availability:{" "}
                 {hospital.availability
                   ? "Available"
