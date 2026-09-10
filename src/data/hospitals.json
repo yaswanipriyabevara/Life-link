@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "name": "City Trauma Care Hospital",
+    "distance": 2.4,
+    "traumaLevel": 1,
+    "availability": true,
+    "specialties": ["Trauma", "Emergency Care", "Surgery"]
+  },
+  {
+    "id": 2,
+    "name": "LifeCare Emergency Hospital",
+    "distance": 3.1,
+    "traumaLevel": 1,
+    "availability": true,
+    "specialties": ["Trauma", "Emergency Care"]
+  },
+  {
+    "id": 3,
+    "name": "Sunrise Multispeciality Hospital",
+    "distance": 1.8,
+    "traumaLevel": 2,
+    "availability": true,
+    "specialties": ["General Emergency", "Orthopedics"]
+  },
+  {
+    "id": 4,
+    "name": "Green Valley Hospital",
+    "distance": 4.5,
+    "traumaLevel": 3,
+    "availability": false,
+    "specialties": ["General Care"]
+  }
+]
