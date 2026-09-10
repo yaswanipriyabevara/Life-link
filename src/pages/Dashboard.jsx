@@ -17,6 +17,7 @@ import StatusBadge from "../components/StatusBadge";
 import Modal from "../components/Modal";
 import MapView from "../components/MapView";
 import EscalationFlow from "../components/EscalationFlow";
+import ResponseTimeline from "../components/timeline";
 
 import incidentData from "../data/incidents.json";
 import hospitalData from "../data/hospitals.json";
@@ -27,6 +28,8 @@ import { assessSeverity } from "../logic/severityEngine";
 import { findBestHospital } from "../logic/hospitalMatcher";
 
 import {
+  createEscalation,
+  cancelEscalation,
   getEscalationFlow,
   findNearestAvailableResponder
 } from "../logic/escalation";
@@ -86,13 +89,15 @@ function Dashboard() {
   });
 
 
+  const [escalation, setEscalation] = useState(null);
+
+
   const [error, setError] = useState("");
 
 
   const handleSimulateSignal = () => {
 
     setError("");
-
     setShowModal(true);
 
   };
@@ -104,13 +109,9 @@ function Dashboard() {
       return;
     }
 
-
     setError("");
-
     setLoading(true);
-
     setShowModal(false);
-
 
     setTimeout(() => {
 
@@ -187,6 +188,8 @@ function Dashboard() {
 
         setVictimStatus(null);
 
+        setEscalation(null);
+
 
         localStorage.removeItem(
           "lifelink_victim_status"
@@ -217,6 +220,10 @@ function Dashboard() {
   };
 
 
+  /*
+   * VICTIM RESPONSE
+   */
+
   const handleVictimResponse = (status) => {
 
     setVictimStatus(status);
@@ -227,8 +234,34 @@ function Dashboard() {
       status
     );
 
+
+    if (status === "safe") {
+
+      const cancelled =
+        cancelEscalation();
+
+      setEscalation(cancelled);
+
+      return;
+
+    }
+
+
+    if (status === "no-response") {
+
+      const newEscalation =
+        createEscalation(responderData);
+
+      setEscalation(newEscalation);
+
+    }
+
   };
 
+
+  /*
+   * RESET
+   */
 
   const handleResetIncident = () => {
 
@@ -236,7 +269,10 @@ function Dashboard() {
 
     setVictimStatus(null);
 
+    setEscalation(null);
+
     setError("");
+
 
     localStorage.removeItem(
       "lifelink_incident"
@@ -247,6 +283,88 @@ function Dashboard() {
     );
 
   };
+
+
+  /*
+   * ESCALATION STEPS
+   */
+
+  const escalationSteps =
+    escalation
+      ? getEscalationFlow(escalation)
+      : [];
+
+
+  /*
+   * RESPONSE TRACKING TIMELINE
+   */
+
+  const responseEvents = [
+
+    {
+      title: "Accident detected",
+      description:
+        "Incident signal successfully validated.",
+      time: incident
+        ? "Completed"
+        : ""
+    },
+
+    {
+      title: "Location acquired",
+      description:
+        incident
+          ? `GPS location: ${incident.location.latitude}, ${incident.location.longitude}`
+          : "Waiting for incident location.",
+      time: incident
+        ? "Completed"
+        : "Pending"
+    },
+
+    {
+      title: "Hospital selected",
+      description:
+        incident?.hospital
+          ? `${incident.hospital.name} selected based on emergency requirements.`
+          : "Hospital selection pending.",
+      time: incident?.hospital
+        ? "Completed"
+        : "Pending"
+    },
+
+    {
+      title: "Contact notified",
+      description:
+        victimStatus === "no-response"
+          ? "Emergency contact notification initiated."
+          : victimStatus === "safe"
+          ? "Escalation cancelled because victim responded."
+          : "Waiting for victim confirmation.",
+      time:
+        victimStatus === "no-response"
+          ? "Completed"
+          : victimStatus === "safe"
+          ? "Cancelled"
+          : "Pending"
+    },
+
+    {
+      title: "Responder assigned",
+      description:
+        escalation?.responder
+          ? `${escalation.responder.name} assigned for emergency response.`
+          : victimStatus === "safe"
+          ? "Responder assignment cancelled."
+          : "Waiting for escalation.",
+      time:
+        escalation?.assigned
+          ? "Completed"
+          : victimStatus === "safe"
+          ? "Cancelled"
+          : "Pending"
+    }
+
+  ];
 
 
   return (
@@ -730,6 +848,8 @@ function Dashboard() {
               longitude={
                 incident.location.longitude
               }
+              hospitals={hospitalData}
+              recommendedHospital={incident.hospital}
             />
 
           </Card>
@@ -776,62 +896,17 @@ function Dashboard() {
 
             {!victimStatus && (
 
-              <>
-
-                <div className="info-row">
-
-                  <Activity size={24} />
-
-                  <div>
-
-                    <strong>
-                      Can the victim respond?
-                    </strong>
-
-                    <p>
-                      This step demonstrates
-                      how LIFELINK handles both
-                      victim confirmation and
-                      no-response situations.
-                    </p>
-
-                  </div>
-
-                </div>
-
-
-                <div className="modal-actions">
-
-                  <Button
-                    onClick={() =>
-                      handleVictimResponse("safe")
-                    }
-                  >
-
-                    <UserCheck size={18} />
-
-                    Victim Responded
-
-                  </Button>
-
-
-                  <Button
-                    onClick={() =>
-                      handleVictimResponse(
-                        "no-response"
-                      )
-                    }
-                  >
-
-                    <UserX size={18} />
-
-                    No Response
-
-                  </Button>
-
-                </div>
-
-              </>
+              <EscalationFlow
+                escalation={null}
+                onSafe={() =>
+                  handleVictimResponse("safe")
+                }
+                onNoResponse={() =>
+                  handleVictimResponse(
+                    "no-response"
+                  )
+                }
+              />
 
             )}
 
@@ -839,24 +914,10 @@ function Dashboard() {
 
             {victimStatus === "safe" && (
 
-              <div className="info-row">
-
-                <UserCheck size={24} />
-
-                <div>
-
-                  <strong>
-                    Victim Responded
-                  </strong>
-
-                  <p>
-                    The victim has indicated
-                    that they are responsive.
-                  </p>
-
-                </div>
-
-              </div>
+              <EscalationFlow
+                escalation={escalation}
+                steps={[]}
+              />
 
             )}
 
@@ -864,24 +925,10 @@ function Dashboard() {
 
             {victimStatus === "no-response" && (
 
-              <div className="info-row">
-
-                <UserX size={24} />
-
-                <div>
-
-                  <strong>
-                    No Response Detected
-                  </strong>
-
-                  <p>
-                    LIFELINK can now begin the
-                    emergency escalation workflow.
-                  </p>
-
-                </div>
-
-              </div>
+              <EscalationFlow
+                escalation={escalation}
+                steps={escalationSteps}
+              />
 
             )}
 
@@ -889,34 +936,15 @@ function Dashboard() {
 
 
 
-          {/* ESCALATION */}
+          {/* RESPONSE TIMELINE */}
 
-          {victimStatus === "no-response" && (
+          <Card title="Emergency Response Timeline">
 
-            <Card title="No-Response Escalation">
+            <ResponseTimeline
+              events={responseEvents}
+            />
 
-              <p className="assessment-text">
-
-                The victim has not responded.
-                LIFELINK demonstrates escalation
-                through emergency contacts,
-                verified responders and
-                emergency dispatch.
-
-              </p>
-
-
-              <EscalationFlow
-                steps={
-                  getEscalationFlow(
-                    incident.responder
-                  )
-                }
-              />
-
-            </Card>
-
-          )}
+          </Card>
 
 
 
@@ -931,14 +959,27 @@ function Dashboard() {
               <div>
 
                 <strong>
-                  LIFELINK workflow active
+
+                  {victimStatus === "safe"
+                    ? "Escalation cancelled"
+                    : victimStatus === "no-response"
+                    ? escalation?.assigned
+                      ? "Responder assigned"
+                      : "Emergency escalation active"
+                    : "Awaiting victim confirmation"}
+
                 </strong>
 
                 <p>
-                  Incident validated successfully.
-                  Location, hospital matching and
-                  responder selection are available
-                  for the response workflow.
+
+                  {victimStatus === "safe"
+                    ? "Victim confirmed safety. No emergency escalation was required."
+                    : victimStatus === "no-response"
+                    ? escalation?.assigned
+                      ? "Emergency contact notified and verified responder assigned."
+                      : "LIFELINK is processing the emergency escalation workflow."
+                    : "Waiting for victim response before escalation."}
+
                 </p>
 
               </div>
@@ -947,8 +988,20 @@ function Dashboard() {
 
 
             <StatusBadge
-              status="Simulation"
-              type="info"
+              status={
+                victimStatus === "safe"
+                  ? "Cancelled"
+                  : victimStatus === "no-response"
+                  ? "Escalating"
+                  : "Awaiting Response"
+              }
+              type={
+                victimStatus === "safe"
+                  ? "default"
+                  : victimStatus === "no-response"
+                  ? "danger"
+                  : "info"
+              }
             />
 
           </Card>
@@ -1051,9 +1104,11 @@ function Dashboard() {
             onClick={handleConfirmSignal}
             disabled={loading}
           >
+
             {loading
               ? "Validating..."
               : "Validate Signal"}
+
           </Button>
 
         </div>

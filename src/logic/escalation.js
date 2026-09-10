@@ -7,43 +7,85 @@ export function findNearestAvailableResponder(responders) {
     return null;
   }
 
-  availableResponders.sort(
+  return [...availableResponders].sort(
     (a, b) => a.distance - b.distance
-  );
-
-  return availableResponders[0];
+  )[0];
 }
 
-export function getEscalationFlow(responder) {
+export function createEscalation(responders) {
+  const responder = findNearestAvailableResponder(responders);
+
+  return {
+    status: "escalating",
+    emergencyContact: {
+      status: "notified",
+      message: "Emergency contact has been notified."
+    },
+    responder,
+    dispatch: {
+      status: responder ? "dispatched" : "pending",
+      message: responder
+        ? "Emergency dispatch initiated."
+        : "No verified responder is currently available."
+    },
+    assigned: Boolean(responder)
+  };
+}
+
+export function cancelEscalation() {
+  return {
+    status: "cancelled",
+    emergencyContact: {
+      status: "notified",
+      message: "No emergency escalation was required."
+    },
+    responder: null,
+    dispatch: {
+      status: "cancelled",
+      message: "Emergency escalation cancelled by victim."
+    },
+    assigned: false
+  };
+}
+
+export function getEscalationFlow(escalation) {
   return [
     {
       id: 1,
-      title: "Victim",
-      description:
-        "Accident detected and victim response unavailable.",
+      title: "Accident Detected",
+      description: "Accident signal has been validated.",
       status: "completed"
     },
     {
       id: 2,
       title: "Emergency Contact",
       description:
-        "Emergency contact notification initiated.",
-      status: "completed"
+        escalation.emergencyContact.message,
+      status:
+        escalation.status === "cancelled"
+          ? "pending"
+          : "completed"
     },
     {
       id: 3,
       title: "Verified Responder",
-      description: responder
-        ? `${responder.name} is ${responder.distance} km away and available.`
+      description: escalation.responder
+        ? `${escalation.responder.name} is ${escalation.responder.distance} km away and available.`
         : "No verified responder is currently available.",
-      status: responder ? "active" : "pending"
+      status: escalation.assigned
+        ? "completed"
+        : "pending"
     },
     {
       id: 4,
       title: "Emergency Dispatch",
-      description:
-        "Emergency dispatch escalation ready.",
-      status: "pending"
+      description: escalation.dispatch.message,
+      status:
+        escalation.dispatch.status === "dispatched"
+          ? "completed"
+          : escalation.dispatch.status === "cancelled"
+          ? "pending"
+          : "active"
     }
   ];
 }
