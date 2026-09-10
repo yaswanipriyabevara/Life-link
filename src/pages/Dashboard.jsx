@@ -148,11 +148,14 @@ function Dashboard() {
           assessSeverity(signals);
 
 
-        const bestHospital =
-          findBestHospital(
-            hospitalData,
-            severityResult.severity
-          );
+       const bestHospitals = findBestHospital(
+  hospitalData,
+  signals.location.latitude,
+  signals.location.longitude,
+  severityResult.severity
+);
+
+const bestHospital = bestHospitals?.[0] || null;
 
 
         const nearestResponder =

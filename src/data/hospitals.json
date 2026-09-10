@@ -1,34 +1,56 @@
 [
   {
     "id": 1,
-    "name": "City Trauma Care Hospital",
-    "distance": 2.4,
+    "name": "City Trauma Center",
+    "latitude": 16.5062,
+    "longitude": 80.648,
     "traumaLevel": 1,
     "availability": true,
     "specialties": ["Trauma", "Emergency Care", "Surgery"]
   },
   {
     "id": 2,
-    "name": "LifeCare Emergency Hospital",
-    "distance": 3.1,
+    "name": "Central Emergency Hospital",
+    "latitude": 16.51,
+    "longitude": 80.64,
     "traumaLevel": 1,
     "availability": true,
     "specialties": ["Trauma", "Emergency Care"]
   },
   {
     "id": 3,
-    "name": "Sunrise Multispeciality Hospital",
-    "distance": 1.8,
+    "name": "Advanced Care Hospital",
+    "latitude": 16.5,
+    "longitude": 80.655,
     "traumaLevel": 2,
     "availability": true,
-    "specialties": ["General Emergency", "Orthopedics"]
+    "specialties": ["Emergency Care", "Orthopedics"]
   },
   {
     "id": 4,
-    "name": "Green Valley Hospital",
-    "distance": 4.5,
+    "name": "Metro Emergency Center",
+    "latitude": 16.515,
+    "longitude": 80.66,
+    "traumaLevel": 2,
+    "availability": true,
+    "specialties": ["Emergency Care", "Critical Care"]
+  },
+  {
+    "id": 5,
+    "name": "Community Hospital",
+    "latitude": 16.518,
+    "longitude": 80.65,
     "traumaLevel": 3,
+    "availability": true,
+    "specialties": ["General Emergency"]
+  },
+  {
+    "id": 6,
+    "name": "Regional Trauma Hospital",
+    "latitude": 16.495,
+    "longitude": 80.67,
+    "traumaLevel": 1,
     "availability": false,
-    "specialties": ["General Care"]
+    "specialties": ["Trauma", "Surgery", "Critical Care"]
   }
 ]
