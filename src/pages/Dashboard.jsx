@@ -135,7 +135,7 @@ function Dashboard() {
           detectAccident(signals);
 
 
-      if (!detectionResult.accidentDetected) {
+  if (!detectionResult.detected) {
   throw new Error(
     "The received signals could not be validated as an accident."
   );
@@ -411,7 +411,7 @@ function Dashboard() {
 
       {!loading &&
         incident &&
-        incident.accidentDetected && (
+        incident.detected && (
 
         <>
 
