@@ -135,13 +135,11 @@ function Dashboard() {
           detectAccident(signals);
 
 
-        if (!detectionResult.accidentDetected) {
-
-          throw new Error(
-            "The received signals could not be validated as an accident."
-          );
-
-        }
+      if (!detectionResult.accidentDetected) {
+  throw new Error(
+    "The received signals could not be validated as an accident."
+  );
+}
 
 
         const severityResult =
